@@ -56,9 +56,9 @@ If a probability density function is $f(x)$, then the cumulative distribution fu
 $F(x)$ must satisfy $$F(x) = \int_{-\infty}^x f(t) \,\mathrm{d}t.$$
 
 For instance, the exponential distribution with mean $1/\lambda$ has
-$$f(x) = \begin{cases} \lambda e^{-\lambda x} & \text{if } x \ge 0 \\ 0 & \text{if } x < 0 \end{cases}$$
+$$f(x) = [x \ge 0]\lambda e^{-\lambda x}$$
 and
-$$F(x) = \begin{cases} 1 - e^{-\lambda x} & \text{if } x \ge 0 \\ 0 & \text{if } x < 0 \end{cases}.$$
+$$F(x) = [x \ge 0](1-e^{-\lambda x}).$$
 
 Hence, one may define as following.
 ```python
