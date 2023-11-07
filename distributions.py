@@ -4,7 +4,8 @@ import subprocess
 
 if __name__ != '__main__':
     if importlib.util.find_spec('scipy') is None:
-        i = input("[distributions.py] Package 'scipy' is required. Install it? [Y/N] ")
+        i = input(
+            "[distributions.py] Package 'scipy' is required. Install it? [Y/N] ")
         if i == 'Y' or i == 'y':
             subprocess.check_call(
                 [sys.executable, '-m', 'pip', 'install', 'scipy'])
@@ -14,6 +15,7 @@ if __name__ != '__main__':
 
 from typing import Callable
 from scipy.special import erf, gamma, hyp2f1, gammainc, beta, betainc
+from scipy.optimize import root_scalar
 import math
 
 
@@ -42,47 +44,30 @@ class ContinuousDistribution:
     def get_name(self) -> str:
         return self.__name
 
-    def get_quantile(self, x: float, guess: float = .5, rep: int = 1000) -> float:
+    def get_quantile(self, x: float, guess: float = 1) -> float:
         """
         Calculate the inverse function of cdf at x.
         In other words, get_cdf_at(get_quantile(x)) == x.
 
         :param guess: The initial guess of the inverse function of cdf at x.
-        :param rep: The number of repetitions. The higher `rep` is, the more accurate the result is.
         """
         assert 0 < x < 1, "x must be between 0 and 1."
-        res = guess
-        for _ in range(rep):
-            res -= (self.__cdf(res) - x) / self.__pdf(res)
-        return res
+        sol = root_scalar(lambda t: self.__cdf(t) - x,
+                          x0=guess, fprime=self.__pdf)
+        assert sol.converged, "Could not find the quantile."
+        return sol.root
 
-    def get_score(self, x: float, guess: float = .5, rep: int = 1000) -> float:
+    def get_score(self, x: float, guess: float = 1) -> float:
         """
         Calculate the value z such that cdf(z) = 1-x, i.e., P(X > z) = x.
         This is essentially get_quantile(1-x).
 
         :param guess: The initial guess of the inverse function of cdf at x.
-        :param rep: The number of repetitions. The higher `rep` is, the more accurate the result is.
         """
-        return self.get_quantile(1 - x, guess, rep)
+        return self.get_quantile(1 - x, guess)
 
     def __repr__(self):
         return f'<Distribution {self.__name}>'
-
-
-def hyper_geometric(a: float, b: float, c: float, z: float, rep: int = 0) -> float:
-    if rep <= 0:
-        rep = max(int(math.ceil(a * b * z / c) * 10), 100)
-        # rep = math.ceil(a * b / c)
-    res = coeff = 1.
-    for i in range(1, rep + 1):
-        coeff *= a * b * z / c / i
-        # print(coeff, res)
-        res += coeff
-        a += 1
-        b += 1
-        c += 1
-    return res
 
 
 def normal_distribution(mu: float, sigma_squared: float) -> ContinuousDistribution:
@@ -108,6 +93,8 @@ def gamma_distribution(alpha: float, l: float) -> ContinuousDistribution:
         return l * math.exp(-lx) * lx ** (alpha - 1) / gamma(alpha)
 
     def cdf(x):
+        if x < 0:
+            return 0
         return gammainc(alpha, l * x)
     return ContinuousDistribution(pdf, cdf, f'Gamma({alpha:.4g}, {l:.4g})')
 
