@@ -82,21 +82,21 @@ def normal_distribution(mu: float, sigma_squared: float) -> ContinuousDistributi
     return ContinuousDistribution(pdf, cdf, f'Normal({mu:.4g}, {sigma_squared:.4g})')
 
 
-def gamma_distribution(alpha: float, l: float) -> ContinuousDistribution:
+def gamma_distribution(alpha: float, beta: float) -> ContinuousDistribution:
     assert alpha > 0, "alpha must be positive."
-    assert l > 0, "l must be positive."
+    assert beta > 0, "l must be positive."
 
     def pdf(x):
         if x < 0:
             return 0
-        lx = l * x
-        return l * math.exp(-lx) * lx ** (alpha - 1) / gamma(alpha)
+        lx = beta * x
+        return beta * math.exp(-lx) * lx ** (alpha - 1) / gamma(alpha)
 
     def cdf(x):
         if x < 0:
             return 0
-        return gammainc(alpha, l * x)
-    return ContinuousDistribution(pdf, cdf, f'Gamma({alpha:.4g}, {l:.4g})')
+        return gammainc(alpha, beta * x)
+    return ContinuousDistribution(pdf, cdf, f'Gamma({alpha:.4g}, {beta:.4g})')
 
 
 def chi_squared_distribution(k: int) -> ContinuousDistribution:
@@ -111,6 +111,8 @@ def chi_squared_distribution(k: int) -> ContinuousDistribution:
         return l * math.exp(-lx) * lx ** (alpha - 1) / gamma(alpha)
 
     def cdf(x):
+        if x < 0:
+            return 0
         return gammainc(alpha, l * x)
     return ContinuousDistribution(pdf, cdf, f'ChiSquared({k})')
 
